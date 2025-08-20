@@ -9,6 +9,7 @@
 
 
 #include "stencil_template_serial.h"
+#include "walltime.h"
 
 int dump ( const double *, const uint [2], const char *, double *, double * );
 
