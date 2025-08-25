@@ -8,7 +8,7 @@
  */
 
 
-#include "stencil_template_serial.h"
+#include "stencil_template_serial_original.h"
 #include "wall_time.h"
 
 int dump ( const double *, const uint [2], const char *, double *, double * );
@@ -46,8 +46,8 @@ int main(int argc, char **argv)
     inject_energy( periodic, Nsources, Sources, energy_per_source, S, planes[current] );
   
   double start=get_wall_time();
-
-    for (int iter = 0; iter < Niterations; iter++)
+  
+  for (int iter = 0; iter < Niterations; iter++)
     
     {      
       /* new energy from sources */
@@ -91,8 +91,7 @@ int main(int argc, char **argv)
   
   double end=get_wall_time();
   printf("time=%g sec\n",end-start);
-  
-  
+
   memory_release( planes[OLD], Sources );
   return 0;
 }
