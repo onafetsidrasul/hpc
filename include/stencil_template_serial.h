@@ -90,13 +90,13 @@ inline int inject_energy ( const int     periodic,
 
         if ( periodic )
             {
-                if ( x == 1 )
+                if ( x == 1 ) // is the source at the left boundary?
                     plane[IDX(mysize[_x_]+1, y)] += energy;
-                if ( x == mysize[_x_] )
+                if ( x == mysize[_x_] ) // is the source at the right boundary?
                     plane[IDX(0, y)] += energy;
-                if ( y == 1 )
+                if ( y == 1 ) // is the source at the top boundary?
                     plane[IDX(x, mysize[_y_]+1)] += energy;
-                if ( y == mysize[_y_] )
+                if ( y == mysize[_y_] ) // is the source at the bottom boundary?
                     plane[IDX(x, 0)] += energy;
             }
     }
