@@ -29,6 +29,8 @@
 #define _x_ 0
 #define _y_ 1
 
+#include <omp.h>
+
 
 
 // ============================================================
@@ -80,7 +82,6 @@ inline int inject_energy ( const int     periodic,
 			   const int     mysize[2],
                            double *plane )
 {
-    // from 2d to 1d
    #define IDX( i, j ) ( (j)*(mysize[_x_]+2) + (i) )
     for (int s = 0; s < Nsources; s++) {
         
@@ -137,24 +138,15 @@ inline int update_plane ( const int     periodic,
     //
     // HINT: in any case, this loop is a good candidate
     //       for openmp parallelization
-
     double reduced_sum=0.0;
 
     #pragma omp parallel for reduction(+:reduced_sum) schedule(static)
     for (int j = 1; j <= ysize; j++){
+
+        
         #pragma GCC unroll 4
         for ( int i = 1; i <= xsize; i++)
             {
-                //
-                // five-points stencil formula
-                //
-
-                
-                // simpler stencil with no explicit diffusivity
-                // always conserve the smoothed quantity
-                // alpha here mimics how much "easily" the heat
-                // travels
-                
                 double alpha = 0.6;
                 double result = old[ IDX(i,j) ] *alpha;
                 double sum_i  = (old[IDX(i-1, j)] + old[IDX(i+1, j)]) / 4.0 * (1-alpha);

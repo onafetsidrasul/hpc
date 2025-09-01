@@ -12,8 +12,8 @@
 #include <time.h>
 #include <math.h>
 
-#include <omp.h>
-#include <mpi.h>
+//#include <omp.h>
+//#include <mpi.h>
 
 #include "mpi_timers.h"
 
@@ -30,6 +30,7 @@
 
 #define _x_ 0
 #define _y_ 1
+
 
 #define TAG_BORDER_EXCHANGE 77 
 
@@ -58,11 +59,11 @@ typedef struct {
 
 extern int inject_energy ( const int      ,
                            const int      ,
-			                const vec2_t  *,
-			                const double   ,
+			   const vec2_t  *,
+			   const double   ,
                            const vec2_t   ,   
                            plane_t *      ,  
-			            int             );
+			   int             );
 
 
 extern int update_plane ( const int      ,
