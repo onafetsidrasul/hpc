@@ -23,6 +23,7 @@ int main(int argc, char **argv)
   MPI_Comm myCOMM_WORLD;
   int  Rank, Ntasks;
   uint neighbours[4];
+  int verbose = 0;
 
   int  Niterations;
   int  periodic;
@@ -61,7 +62,7 @@ int main(int argc, char **argv)
   int ret = initialize ( &myCOMM_WORLD, Rank, Ntasks, argc, argv, &S, &N, &periodic, &output_energy_stat_perstep,
 			 neighbours, &Niterations,
 			 &Nsources, &Nsources_local, &Sources_local, &energy_per_source,
-			 &planes[0], &buffers[0] );
+			 &planes[0], &buffers[0], &verbose);
 
   if ( ret )
     {
@@ -83,7 +84,7 @@ int main(int argc, char **argv)
       
       
       /* new energy from sources */
-      int inj_energy=inject_energy( periodic, Nsources_local, Sources_local, energy_per_source, &planes[current], N );
+      int inj_energy=inject_energy( periodic, Nsources_local, Sources_local, energy_per_source, N, &planes[current], verbose);
       if ( inj_energy != 0 ) {
         fprintf(stderr, "Rank %d: error %d in inject_energy\n", Rank, inj_energy);
         MPI_Abort(MPI_COMM_WORLD, inj_energy);
