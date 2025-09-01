@@ -78,43 +78,68 @@ extern int get_total_energy( plane_t *,
 // for the domain decomposition!! Trying to find an optimal one with less communication surface
 // Less messages, less latency
 // It is serial but it's fine
-uint simple_factorization(uint num, int *Nfactors, uint **factors) {
-    int bufferSize = 16;
-    int k = 0;
-    uint *_factors_ = malloc(bufferSize * sizeof(uint));
-    uint _num_ = num;
-    uint f = 2;
+uint simple_factorization(uint A, int *Nfactors, uint **factors) {
+    int max_threads = omp_get_max_threads();
+    uint **local_factors = malloc(max_threads * sizeof(uint *));
+    int *local_counts = calloc(max_threads, sizeof(int));
+    int *local_capacities = malloc(max_threads * sizeof(int));
 
-    while (f * f <= _num_) {
-        while (_num_ % f == 0) {
-            if (k >= bufferSize) {
-                bufferSize *= 2;
-                _factors_ = realloc(_factors_, bufferSize * sizeof(uint));
-                if (!_factors_) {
-                    fprintf(stderr, "Error: realloc failed\n");
-                    exit(EXIT_FAILURE);
+    for (int i = 0; i < max_threads; ++i) {
+        local_capacities[i] = 16;
+        local_factors[i] = malloc(local_capacities[i] * sizeof(uint));
+    }
+
+    #pragma omp parallel
+    {
+        int tid = omp_get_thread_num();
+        int local_count = 0;
+        uint local_A = A;
+
+        #if OPENMP_SCHEDULE == SCHED_STATIC
+            #pragma omp for schedule(static, OMP_CHUNK_SIZE) nowait
+        #elif OPENMP_SCHEDULE == SCHED_DYNAMIC
+            #pragma omp for schedule(dynamic, OMP_CHUNK_SIZE) nowait
+        #elif OPENMP_SCHEDULE == SCHED_GUIDED
+            #pragma omp for schedule(guided, OMP_CHUNK_SIZE) nowait
+        #else
+            #pragma omp for schedule(auto) nowait
+        #endif
+        for (int f = 2; f <= A / 2; ++f) {
+            while (local_A % f == 0) {
+                if (local_count >= local_capacities[tid]) {
+                    local_capacities[tid] *= 2;
+                    local_factors[tid] = realloc(local_factors[tid], local_capacities[tid] * sizeof(uint));
+                    if (!local_factors[tid]) {
+                        fprintf(stderr, "Error: realloc failed\n");
+                        exit(EXIT_FAILURE);
+                    }
                 }
-            }
-            _factors_[k++] = f;
-            _num_ /= f;
-        }
-        f += (f == 2) ? 1 : 2;  // after 2, only test odd numbers
-    }
-
-    if (_num_ > 1) {  // remaining prime factor
-        if (k >= bufferSize) {
-            bufferSize *= 2;
-            _factors_ = realloc(_factors_, bufferSize * sizeof(uint));
-            if (!_factors_) {
-                fprintf(stderr, "Error: realloc failed\n");
-                exit(EXIT_FAILURE);
+                local_factors[tid][local_count++] = f;
+                local_A /= f;
             }
         }
-        _factors_[k++] = _num_;
+
+        local_counts[tid] = local_count;
     }
 
-    *Nfactors = k;
-    *factors = _factors_;
+    int total_count = 0;
+    for (int i = 0; i < max_threads; ++i)
+        total_count += local_counts[i];
+
+    uint *final_factors = malloc(total_count * sizeof(uint));
+    int offset = 0;
+    for (int i = 0; i < max_threads; ++i) {
+        for (int j = 0; j < local_counts[i]; ++j)
+            final_factors[offset++] = local_factors[i][j];
+        free(local_factors[i]);
+    }
+
+    free(local_factors);
+    free(local_counts);
+    free(local_capacities);
+
+    *Nfactors = total_count;
+    *factors = final_factors;
     return 0;
 }
 
