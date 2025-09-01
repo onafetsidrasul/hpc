@@ -9,7 +9,7 @@ if [[ "$PWD" == "/leonardo/home/userexternal/slusardi"* ]]; then
                      --partition=dcgp_usr_prod 
 		     -A uTS25_Tornator_0"
   ENV="LEONARDO"
-  module load gcc/12.2.0
+  module load gcc/12.2.0-binut2.41
   module load openmpi/4.1.6--gcc--12.2.0
   echo "Detected Leonardo environment"
 elif [[ "$PWD" == "/u/dssc/stelus/HPCproject"* ]]; then
