@@ -3,7 +3,7 @@
 
 # === Detect cluster and set account/partition ===
 ENV=""
-if [[ "$PWD" == "/leonardo/home/userexternal/gbillo00"* ]]; then
+if [[ "$PWD" == "/leonardo/home/userexternal/slusardi"* ]]; then
 	COMMON_OPTS="--time=02:00:00 \
 	     	     --exclusive
                      --partition=dcgp_usr_prod 
@@ -12,7 +12,7 @@ if [[ "$PWD" == "/leonardo/home/userexternal/gbillo00"* ]]; then
   module load gcc/12.2.0
   module load openmpi/4.1.6--gcc--12.2.0
   echo "Detected Leonardo environment"
-elif [[ "$PWD" == "/u/dssc/gbillo/HPCproject"* ]]; then
+elif [[ "$PWD" == "/u/dssc/stelus/HPCproject"* ]]; then
   COMMON_OPTS=" --time=02:00:00 \
 	     	--exclusive
   		--partition=EPYC 
