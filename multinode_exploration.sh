@@ -6,7 +6,7 @@ make -j$(nproc) OPENMP_SCHEDULE=1
 
 #
 # === Read best_n_threads and best_n_tasks ===
-if [[ ! -f chosen_param ]]; then
+if [[ ! -f best_thread_task ]]; then
   echo "❌ Missing 'best_thread_task' file" >&2
   exit 1
 fi
