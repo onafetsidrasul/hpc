@@ -1,0 +1,20 @@
+Started thread scalability study at Mon Sep  1 23:13:16 CEST 2025
+[Mon Sep  1 23:13:16 CEST 2025] Testing OMP_NUM_THREADS=1
+Completed 1 threads in 223.51 s (wall: 223.526721376 s)
+[Mon Sep  1 23:16:59 CEST 2025] Testing OMP_NUM_THREADS=2
+Completed 2 threads in 120.51 s (wall: 120.527515698 s)
+[Mon Sep  1 23:19:00 CEST 2025] Testing OMP_NUM_THREADS=4
+Completed 4 threads in 84.95 s (wall: 84.967391485 s)
+[Mon Sep  1 23:20:25 CEST 2025] Testing OMP_NUM_THREADS=8
+Completed 8 threads in 67.49 s (wall: 67.504517486 s)
+[Mon Sep  1 23:21:32 CEST 2025] Testing OMP_NUM_THREADS=16
+Completed 16 threads in 48.75 s (wall: 48.762421510 s)
+[Mon Sep  1 23:22:21 CEST 2025] Testing OMP_NUM_THREADS=32
+Completed 32 threads in 41.43 s (wall: 41.445864900 s)
+[Mon Sep  1 23:23:02 CEST 2025] Testing OMP_NUM_THREADS=56
+Completed 56 threads in 32.71 s (wall: 32.721403472 s)
+[Mon Sep  1 23:23:35 CEST 2025] Testing OMP_NUM_THREADS=84
+Completed 84 threads in 39.24 s (wall: 39.256318905 s)
+[Mon Sep  1 23:24:14 CEST 2025] Testing OMP_NUM_THREADS=112
+Completed 112 threads in 40.23 s (wall: 40.243249885 s)
+Thread study completed at Mon Sep  1 23:24:55 CEST 2025
