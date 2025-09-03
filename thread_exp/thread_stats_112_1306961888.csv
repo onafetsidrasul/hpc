@@ -1,0 +1,3 @@
+num_threads, num_nodes,func_id,avg_time,max_time,min_time,imbalance_ratio
+112, 1, 0,1.692973,2.710498,1.668934,38.43
+112, 1, 1,4.572276,4.856365,4.276920,11.93

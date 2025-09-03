@@ -1,6 +1,6 @@
 #!/bin/bash
 # === Load common SLURM options ===
-source common_slurm_options.sh  # defines COMMON_OPTS
+source my_slurm.sh  # defines COMMON_OPTS
 make clean 
 make -j$(nproc) OPENMP_SCHEDULE=1 
 

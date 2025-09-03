@@ -3,7 +3,7 @@
 source my_slurm.sh 
 
 make clean
-make -j$(nproc) OPENMP_SCHEDULE=1
+make -j$(nproc) OPENMP_SCHEDULE=3
 
 # Submit the thread scaling study
 echo "Submitting thread scalability study..."
