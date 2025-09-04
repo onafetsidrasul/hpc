@@ -78,69 +78,44 @@ extern int get_total_energy( plane_t *,
 
 // for the domain decomposition!! Trying to find an optimal one with less communication surface
 // Less messages, less latency
-uint simple_factorization(uint A, int *Nfactors, uint **factors) {
-    int max_threads = omp_get_max_threads();
-    uint **local_factors = malloc(max_threads * sizeof(uint *));
-    int *local_counts = calloc(max_threads, sizeof(int));
-    int *local_capacities = malloc(max_threads * sizeof(int));
+uint simple_factorization( uint A, int *Nfactors, uint **factors )
+/*
+ * rought factorization;
+ * assumes that A is small, of the order of <~ 10^5 max,
+ * since it represents the number of tasks
+ #
+ */
+{
+  int N = 0;
+  int f = 2;
+  uint _A_ = A;
 
-    for (int i = 0; i < max_threads; ++i) {
-        local_capacities[i] = 16;
-        local_factors[i] = malloc(local_capacities[i] * sizeof(uint));
-    }
-
-    #pragma omp parallel
+  while ( f < A )
     {
-        int tid = omp_get_thread_num();
-        int local_count = 0;
-        uint local_A = A;
+      while( _A_ % f == 0 ) {
+	N++;
+	_A_ /= f; }
 
-        #if OPENMP_SCHEDULE == STATIC
-            #pragma omp for schedule(static, OMP_CHUNK_SIZE) nowait
-        #elif OPENMP_SCHEDULE == DYNAMIC
-            #pragma omp for schedule(dynamic, OMP_CHUNK_SIZE) nowait
-        #elif OPENMP_SCHEDULE == GUIDED
-            #pragma omp for schedule(guided, OMP_CHUNK_SIZE) nowait
-        #else
-            #pragma omp for schedule(auto) nowait
-        #endif
-        for (int f = 2; f <= A / 2; ++f) {
-            while (local_A % f == 0) {
-                if (local_count >= local_capacities[tid]) {
-                    local_capacities[tid] *= 2;
-                    local_factors[tid] = realloc(local_factors[tid], local_capacities[tid] * sizeof(uint));
-                    if (!local_factors[tid]) {
-                        fprintf(stderr, "Error: realloc failed\n");
-                        exit(EXIT_FAILURE);
-                    }
-                }
-                local_factors[tid][local_count++] = f;
-                local_A /= f;
-            }
-        }
-
-        local_counts[tid] = local_count;
+      f++;
     }
 
-    int total_count = 0;
-    for (int i = 0; i < max_threads; ++i)
-        total_count += local_counts[i];
+  *Nfactors = N;
+  uint *_factors_ = (uint*)malloc( N * sizeof(uint) );
 
-    uint *final_factors = malloc(total_count * sizeof(uint));
-    int offset = 0;
-    for (int i = 0; i < max_threads; ++i) {
-        for (int j = 0; j < local_counts[i]; ++j)
-            final_factors[offset++] = local_factors[i][j];
-        free(local_factors[i]);
+  N   = 0;
+  f   = 2;
+  _A_ = A;
+
+  while ( f < A )
+    {
+      while( _A_ % f == 0 ) {
+	_factors_[N++] = f;
+	_A_ /= f; }
+      f++;
     }
 
-    free(local_factors);
-    free(local_counts);
-    free(local_capacities);
-
-    *Nfactors = total_count;
-    *factors = final_factors;
-    return 0;
+  *factors = _factors_;
+  return 0;
 }
 
 
