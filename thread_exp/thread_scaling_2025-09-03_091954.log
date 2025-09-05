@@ -1,20 +1,20 @@
-Started thread scalability study at Wed Sep  3 09:19:54 CEST 2025
-[Wed Sep  3 09:19:54 CEST 2025] Testing OMP_NUM_THREADS=1
-Completed 1 threads in 231.03 s (wall: 231.043934975 s)
-[Wed Sep  3 09:23:45 CEST 2025] Testing OMP_NUM_THREADS=2
-Completed 2 threads in 126.09 s (wall: 126.095449817 s)
-[Wed Sep  3 09:25:51 CEST 2025] Testing OMP_NUM_THREADS=4
-Completed 4 threads in 78.23 s (wall: 78.239650624 s)
-[Wed Sep  3 09:27:09 CEST 2025] Testing OMP_NUM_THREADS=8
-Completed 8 threads in 54.86 s (wall: 54.872733786 s)
-[Wed Sep  3 09:28:04 CEST 2025] Testing OMP_NUM_THREADS=16
-Completed 16 threads in 43.98 s (wall: 43.999206610 s)
-[Wed Sep  3 09:28:48 CEST 2025] Testing OMP_NUM_THREADS=32
-Completed 32 threads in 22.11 s (wall: 22.117855048 s)
-[Wed Sep  3 09:29:10 CEST 2025] Testing OMP_NUM_THREADS=56
-Completed 56 threads in 12.87 s (wall: 12.882774437 s)
-[Wed Sep  3 09:29:23 CEST 2025] Testing OMP_NUM_THREADS=84
-Completed 84 threads in 9.02 s (wall: 9.033141921 s)
-[Wed Sep  3 09:29:32 CEST 2025] Testing OMP_NUM_THREADS=112
-Completed 112 threads in 7.13 s (wall: 7.143512264 s)
-Thread study completed at Wed Sep  3 09:29:39 CEST 2025
+Started thread scalability study at Fri Sep  5 09:28:18 CEST 2025
+[Fri Sep  5 09:28:18 CEST 2025] Testing OMP_NUM_THREADS=1
+Completed 1 threads in 227.28 s (wall: 227.292428803 s)
+[Fri Sep  5 09:32:06 CEST 2025] Testing OMP_NUM_THREADS=2
+Completed 2 threads in 126.29 s (wall: 126.295397093 s)
+[Fri Sep  5 09:34:12 CEST 2025] Testing OMP_NUM_THREADS=4
+Completed 4 threads in 75.19 s (wall: 75.201230087 s)
+[Fri Sep  5 09:35:27 CEST 2025] Testing OMP_NUM_THREADS=8
+Completed 8 threads in 54.39 s (wall: 54.399725024 s)
+[Fri Sep  5 09:36:22 CEST 2025] Testing OMP_NUM_THREADS=16
+Completed 16 threads in 43.61 s (wall: 43.620185489 s)
+[Fri Sep  5 09:37:05 CEST 2025] Testing OMP_NUM_THREADS=32
+Completed 32 threads in 22.49 s (wall: 22.497719891 s)
+[Fri Sep  5 09:37:28 CEST 2025] Testing OMP_NUM_THREADS=56
+Completed 56 threads in 12.97 s (wall: 12.980401646 s)
+[Fri Sep  5 09:37:41 CEST 2025] Testing OMP_NUM_THREADS=84
+Completed 84 threads in 9.09 s (wall: 9.105173943 s)
+[Fri Sep  5 09:37:50 CEST 2025] Testing OMP_NUM_THREADS=112
+Completed 112 threads in 7.27 s (wall: 7.277631922 s)
+Thread study completed at Fri Sep  5 09:37:57 CEST 2025
