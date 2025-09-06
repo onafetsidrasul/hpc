@@ -237,11 +237,11 @@ inline int update_plane ( const int      periodic,
 
         for (uint j = 1; j <= ysize; j++) {
             for (uint i = 1; i <= xsize; i++) {
-                double alpha = 0.6;
-                double result = old[IDX(i,j)] * alpha;
-                double sum_i = (old[IDX(i-1, j)] + old[IDX(i+1, j)]) / 4.0 * (1 - alpha);
-                double sum_j = (old[IDX(i, j-1)] + old[IDX(i, j+1)]) / 4.0 * (1 - alpha);
-                result += (sum_i + sum_j);
+                const double alpha = 0.6;
+                const double beta = 0.1;
+                double result = alpha * old[IDX(i,j)] + 
+                       beta * (old[IDX(i-1,j)] + old[IDX(i+1,j)] + 
+                              old[IDX(i,j-1)] + old[IDX(i,j+1)]);  
                 new[IDX(i,j)] = result;
                 summ += result;
             }
