@@ -438,26 +438,53 @@ inline int memory_allocate ( const int       *neighbours  ,
   // allocate buffers
   // unsigned int buffer_frame_size = (buffers_ptr[OLD].size[_x_]+2) * (buffers_ptr[OLD].size[_y_]+2);
 
-  unsigned int buffer_frame_size = frame_size; 
-
-  // allocate buffers 
-  for (int i = 0; i < 4; ++i)
-    for (int j = 0; j < 2; ++j){
-    (buffers_ptr)[j][i] = malloc(frame_size * sizeof(double));
-    if ((buffers_ptr)[j][i] == NULL) {
-        fprintf(stderr, "Error: Memory allocation for (*buffers_ptr)[%d][%d] failed\n", j, i);
-        exit(EXIT_FAILURE);
+    const uint xsize = planes_ptr[OLD].size[_x_];
+    const uint ysize = planes_ptr[OLD].size[_y_];
+    
+    // Calcola le dimensioni effettive necessarie per ogni direzione
+    const uint east_west_buffer_size = ysize;     // Solo una colonna
+    const uint north_south_buffer_size = xsize;   // Solo una riga
+    
+    // Alloca buffer specifici per ogni direzione
+    for (int send_recv = 0; send_recv < 2; send_recv++) {
+        
+        // EAST/WEST buffers (scambiano colonne)
+        for (int dir = EAST; dir <= WEST; dir++) {
+            if (neighbours[dir] != MPI_PROC_NULL) {
+                buffers_ptr[send_recv][dir] = malloc(east_west_buffer_size * sizeof(double));
+                if (buffers_ptr[send_recv][dir] == NULL) {
+                    fprintf(stderr, "Error: Memory allocation for buffer[%d][%d] failed\n", 
+                            send_recv, dir);
+                    exit(EXIT_FAILURE);
+                }
+                memset(buffers_ptr[send_recv][dir], 0, east_west_buffer_size * sizeof(double));
+            } else {
+                buffers_ptr[send_recv][dir] = NULL;
+            }
+        }
+        
+        // NORTH/SOUTH buffers (scambiano righe)
+        for (int dir = NORTH; dir <= SOUTH; dir++) {
+            if (neighbours[dir] != MPI_PROC_NULL) {
+                buffers_ptr[send_recv][dir] = malloc(north_south_buffer_size * sizeof(double));
+                if (buffers_ptr[send_recv][dir] == NULL) {
+                    fprintf(stderr, "Error: Memory allocation for buffer[%d][%d] failed\n", 
+                            send_recv, dir);
+                    exit(EXIT_FAILURE);
+                }
+                memset(buffers_ptr[send_recv][dir], 0, north_south_buffer_size * sizeof(double));
+            } else {
+                buffers_ptr[send_recv][dir] = NULL;
+            }
+        }
     }
-    memset((buffers_ptr)[j][i], 0, frame_size * sizeof(double));
-    }
-
-  // ··················································
-  
-  return 0;
+    
+    return 0;
 }
 
 inline int memory_release(buffers_t *buffers, plane_t *planes, int Rank, int verbose) {
-
+    
+    // Free planes
     if (planes[OLD].data) {
         free(planes[OLD].data);
         planes[OLD].data = NULL;
@@ -466,16 +493,23 @@ inline int memory_release(buffers_t *buffers, plane_t *planes, int Rank, int ver
         free(planes[NEW].data);
         planes[NEW].data = NULL;
     }
-   // free the communication buffers
+    
+    // Free communication buffers
     if (buffers) {
-        for (int i = 0; i < 4; i++) {
-            buffers[i][0] = NULL;
+        for (int send_recv = 0; send_recv < 2; send_recv++) {
+            for (int dir = 0; dir < 4; dir++) {
+                if (buffers[send_recv][dir] != NULL) {
+                    free(buffers[send_recv][dir]);
+                    buffers[send_recv][dir] = NULL;
+                }
+            }
+        }
         
-	    if (Rank == 0)
-		    printf("plane at rank %d freed.\n", Rank);
-
-	}
+        if (Rank == 0 && verbose > 0) {
+            printf("Rank %d: All buffers freed.\n", Rank);
+        }
     }
+    
     return 0;
 }
 
@@ -1063,49 +1097,69 @@ void pack_boundary(const plane_t *plane, buffers_t buffers[2],
 }
 
 
-void send_boundary(buffers_t buffers[2], const int neighbours[4], int buffer_width, int buffer_height, int Rank, int verbose, int non_blocking) {
+void send_boundary(buffers_t buffers[2], const int neighbours[4], 
+                   int width, int height, int Rank, int verbose, int non_blocking) {
+    
+    // CALCOLA LE DIMENSIONI EFFETTIVE DEGLI HALO
+    const int east_west_size = height;      // colonne (senza ghost cells)
+    const int north_south_size = width;
+
         MPI_Request reqs[8];
         int req_idx = 0;
 
-        // EAST-WEST Comm
+        // EAST-WEST Communication
         if (neighbours[EAST] != MPI_PROC_NULL) {
             if (verbose > 0) {
-                printf("Rank %d: Sending EAST  to %d:elements %d.(bytes: %d) \n", Rank, neighbours[EAST], buffer_height, buffer_height*sizeof(double));
+                printf("Rank %d: Sending EAST to %d: %d elements\n", 
+                       Rank, neighbours[EAST], east_west_size);
             }
-            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][EAST], buffer_height, MPI_DOUBLE, neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][EAST], east_west_size, MPI_DOUBLE, 
+                                   neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
+                                   &reqs[req_idx++]), comm_time);
         }
         if (neighbours[WEST] != MPI_PROC_NULL) {
-	    if (verbose > 0) {
-		printf("Rank %d: Receiving from WEST (%d) — expecting %d elements (bytes: %zu)\n",
-		       Rank, neighbours[WEST], buffer_height, buffer_height * sizeof(double));
-	    }
-            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][WEST], buffer_height, MPI_DOUBLE, neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][WEST], east_west_size, MPI_DOUBLE, 
+                                   neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
+                                   &reqs[req_idx++]), comm_time);
         }
 
         if (neighbours[WEST] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][WEST], buffer_height, MPI_DOUBLE, neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][WEST], east_west_size, MPI_DOUBLE, 
+                                   neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
+                                   &reqs[req_idx++]), comm_time);
         }
         if (neighbours[EAST] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][EAST], buffer_height, MPI_DOUBLE, neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][EAST], east_west_size, MPI_DOUBLE, 
+                                   neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
+                                   &reqs[req_idx++]), comm_time);
         }
 
-        // NORTH-SOUTH Comm
+        // NORTH-SOUTH Communication
         if (neighbours[NORTH] != MPI_PROC_NULL) {
             if (verbose > 0) {
-                printf("Rank %d: Sending NORTH to %d.\n", Rank, neighbours[NORTH]);
+                printf("Rank %d: Sending NORTH to %d: %d elements\n", 
+                       Rank, neighbours[NORTH], north_south_size);
             }
-            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][NORTH], buffer_width, MPI_DOUBLE, neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][NORTH], north_south_size, MPI_DOUBLE, 
+                                   neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
+                                   &reqs[req_idx++]), comm_time);
         }
         if (neighbours[SOUTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][SOUTH], buffer_width, MPI_DOUBLE, neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][SOUTH], north_south_size, MPI_DOUBLE, 
+                                   neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
+                                   &reqs[req_idx++]), comm_time);
         }
 
         if (neighbours[SOUTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][SOUTH], buffer_width, MPI_DOUBLE, neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][SOUTH], north_south_size, MPI_DOUBLE, 
+                                   neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
+                                   &reqs[req_idx++]), comm_time);
         }
         if (neighbours[NORTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][NORTH], buffer_width, MPI_DOUBLE, neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][NORTH], north_south_size, MPI_DOUBLE, 
+                                   neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
+                                   &reqs[req_idx++]), comm_time);
         }
 
         MPI_Waitall(req_idx, reqs, MPI_STATUSES_IGNORE);
-}
+    }

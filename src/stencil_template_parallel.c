@@ -108,7 +108,7 @@ int main(int argc, char **argv)
       //     (1) use Send / Recv
       //     (2) use Isend / Irecv
       //         --> can you overlap communication and compution in this way?
-      send_boundary(buffers, neighbours, buffer_width, buffer_height, Rank, verbose, 1); 
+      send_boundary(buffers, neighbours, width, height, Rank, verbose, 1);
       
       // [C] copy the haloes data
       update_boundary( &planes[current], buffers, width, height, neighbours, verbose, Rank );
