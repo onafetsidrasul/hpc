@@ -1064,7 +1064,6 @@ void pack_boundary(const plane_t *plane, buffers_t buffers[2],
 
 
 void send_boundary(buffers_t buffers[2], const int neighbours[4], int buffer_width, int buffer_height, int Rank, int verbose, int non_blocking) {
-    if (non_blocking) {
         MPI_Request reqs[8];
         int req_idx = 0;
 
@@ -1109,40 +1108,4 @@ void send_boundary(buffers_t buffers[2], const int neighbours[4], int buffer_wid
         }
 
         MPI_Waitall(req_idx, reqs, MPI_STATUSES_IGNORE);
-    } else {
-        // Blocking mode
-        if (neighbours[EAST] != MPI_PROC_NULL) {
-            if (verbose > 0) {
-                printf("Rank %d: Sending EAST to %d.\n", Rank, neighbours[EAST]);
-            }
-            MPI_CALL_TIMER(MPI_Send(buffers[SEND][EAST], buffer_height, MPI_DOUBLE, neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD), comm_time);
-        }
-        if (neighbours[WEST] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Recv(buffers[RECV][WEST], buffer_height, MPI_DOUBLE, neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE), comm_time);
-        }
-
-        if (neighbours[WEST] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Send(buffers[SEND][WEST], buffer_height, MPI_DOUBLE, neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD), comm_time);
-        }
-        if (neighbours[EAST] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Recv(buffers[RECV][EAST], buffer_height, MPI_DOUBLE, neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE), comm_time);
-        }
-
-        if (neighbours[NORTH] != MPI_PROC_NULL) {
-            if (verbose > 0) {
-                printf("Rank %d: Sending NORTH to %d.\n", Rank, neighbours[NORTH]);
-            }
-            MPI_CALL_TIMER(MPI_Send(buffers[SEND][NORTH], buffer_width, MPI_DOUBLE, neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD), comm_time);
-        }
-        if (neighbours[SOUTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Recv(buffers[RECV][SOUTH], buffer_width, MPI_DOUBLE, neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE), comm_time);
-        }
-
-        if (neighbours[SOUTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Send(buffers[SEND][SOUTH], buffer_width, MPI_DOUBLE, neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD), comm_time);
-        }
-        if (neighbours[NORTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Recv(buffers[RECV][NORTH], buffer_width, MPI_DOUBLE, neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, MPI_STATUS_IGNORE), comm_time);
-        }
-    }
 }
