@@ -953,66 +953,19 @@ if (Me == 0 && *verbose > 0) {
 void update_boundary(plane_t *plane, buffers_t buffers[2], 
                       int width, int height, const int neighbours[4],
                       int verbose, int rank) {
-    
-    if (verbose > 0) {
-        printf("Rank %d: Updating ghost cells...\n", rank);
-    }
-
-    // ---- EAST (left ghost column) ----
+    // EAST
     if (neighbours[EAST] != MPI_PROC_NULL) {
-        if (verbose > 0) {
-            printf("Rank %d: Updating EAST ghost cells (left column at x=0):\n", rank);
-        }
         for (int j = 1; j < height - 1; j++) {
-            if (verbose > 0) {
-                printf("  y=%d: old=%f, new=%f\n", 
-                       j, plane->data[j * width], buffers[RECV][EAST][j - 1]);
-            }
             plane->data[j * width] = buffers[RECV][EAST][j - 1];
         }
     }
-
-    // ---- WEST (right ghost column) ----
+    // WEST
     if (neighbours[WEST] != MPI_PROC_NULL) {
-        if (verbose > 0) {
-            printf("Rank %d: Updating WEST ghost cells (right column at x=%d):\n", rank, width - 1);
-        }
         for (int j = 1; j < height - 1; j++) {
-            if (verbose > 0) {
-                printf("  y=%d: old=%f, new=%f\n", 
-                       j, plane->data[(j + 1) * width - 1], buffers[RECV][WEST][j - 1]);
-            }
             plane->data[(j + 1) * width - 1] = buffers[RECV][WEST][j - 1];
         }
     }
-
-    // ---- NORTH (top ghost row) ----
-    if (neighbours[NORTH] != MPI_PROC_NULL) {
-        if (verbose > 0) {
-            printf("Rank %d: Updating NORTH ghost cells (top row at y=0):\n", rank);
-        }
-        for (int i = 1; i < width - 1; i++) {
-            if (verbose > 0) {
-                printf("  x=%d: old=%f, new=%f\n", 
-                       i, plane->data[i], buffers[RECV][NORTH][i - 1]);
-            }
-            plane->data[i] = buffers[RECV][NORTH][i - 1];
-        }
-    }
-
-    // ---- SOUTH (bottom ghost row) ----
-    if (neighbours[SOUTH] != MPI_PROC_NULL) {
-        if (verbose > 0) {
-            printf("Rank %d: Updating SOUTH ghost cells (bottom row at y=%d):\n", rank, height - 1);
-        }
-        for (int i = 1; i < width - 1; i++) {
-            if (verbose > 0) {
-                printf("  x=%d: old=%f, new=%f\n", 
-                       i, plane->data[(height - 1) * width + i], buffers[RECV][SOUTH][i - 1]);
-            }
-            plane->data[(height - 1) * width + i] = buffers[RECV][SOUTH][i - 1];
-        }
-    }
+    // NORD/SUD: NON FARE NULLA!
 }
 
 /**
@@ -1028,138 +981,66 @@ void update_boundary(plane_t *plane, buffers_t buffers[2],
 void pack_boundary(const plane_t *plane, buffers_t buffers[2], 
                 int width, int height, const int neighbours[4],
                 int verbose, int rank) {
-    
-    if (verbose > 0) {
-        printf("Rank %d: Packing halos...\n", rank);
-    	fflush(stdout);
-
-    }
-
-    // ---- EAST (send left interior column) ----
+    // EAST
     if (neighbours[EAST] != MPI_PROC_NULL) {
-        if (verbose > 0) {
-            printf("Rank %d: Packing EAST halo (interior column at x=1):\n", rank);
-    	fflush(stdout);
-        }
         for (int j = 1; j < height - 1; j++) {
             buffers[SEND][EAST][j - 1] = plane->data[j * width + 1];
-            if (verbose > 0) {
-                printf("  y=%d: %f\n", j, plane->data[j * width + 1]);
-    		fflush(stdout);
-            }
         }
     }
-
-    // ---- WEST (send right interior column) ----
+    // WEST
     if (neighbours[WEST] != MPI_PROC_NULL) {
-        if (verbose > 0) {
-            printf("Rank %d: Packing WEST halo (interior column at x=%d):\n", rank, width - 2);
-    	fflush(stdout);
-        }
         for (int j = 1; j < height - 1; j++) {
             buffers[SEND][WEST][j - 1] = plane->data[(j + 1) * width - 2];
-            if (verbose> 0) {
-                printf("  y=%d: %f\n", j, plane->data[(j + 1) * width - 2]);
-    		fflush(stdout);
-            }
         }
     }
-
-    // ---- NORTH (send top interior row) ----
-    if (neighbours[NORTH] != MPI_PROC_NULL) {
-        if (verbose > 0) {
-            printf("Rank %d: Packing NORTH halo (interior row at y=1):\n", rank);
-    	fflush(stdout);
-        }
-        for (int i = 1; i < width - 1; i++) {
-            buffers[SEND][NORTH][i - 1] = plane->data[width + i];
-            if (verbose> 0) {
-                printf("  x=%d: %f\n", i, plane->data[width + i]);
-    		fflush(stdout);
-            }
-        }
-    }
-
-    // ---- SOUTH (send bottom interior row) ----
-    if (neighbours[SOUTH] != MPI_PROC_NULL) {
-        if (verbose > 0) {
-            printf("Rank %d: Packing SOUTH halo (interior row at y=%d):\n", rank, height - 2);
-    	fflush(stdout);
-        }
-        for (int i = 1; i < width - 1; i++) {
-            buffers[SEND][SOUTH][i - 1] = plane->data[(height - 2) * width + i];
-            if (verbose > 0) {
-                printf("  x=%d: %f\n", i, plane->data[(height - 2) * width + i]);
-    		fflush(stdout);
-            }
-        }
-    }
+    // NORD/SUD: NON FARE NULLA!
 }
 
-
 void send_boundary(buffers_t buffers[2], const int neighbours[4], 
-                   int width, int height, int Rank, int verbose, int non_blocking) {
-    
-    // CALCOLA LE DIMENSIONI EFFETTIVE DEGLI HALO
-    const int east_west_size = height;      // colonne (senza ghost cells)
+                   int width, int height, int Rank, int verbose, int non_blocking, plane_t *plane) {
+    // EAST/WEST: continuano a usare i buffer
+    const int east_west_size = height;
     const int north_south_size = width;
 
-        MPI_Request reqs[8];
-        int req_idx = 0;
+    MPI_Request reqs[8];
+    int req_idx = 0;
 
-        // EAST-WEST Communication
-        if (neighbours[EAST] != MPI_PROC_NULL) {
-            if (verbose > 0) {
-                printf("Rank %d: Sending EAST to %d: %d elements\n", 
-                       Rank, neighbours[EAST], east_west_size);
-            }
-            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][EAST], east_west_size, MPI_DOUBLE, 
-                                   neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
-                                   &reqs[req_idx++]), comm_time);
+    // EAST-WEST Communication (con buffer)
+    if (neighbours[EAST] != MPI_PROC_NULL) {
+        if (verbose > 0) {
+            printf("Rank %d: Sending EAST to %d: %d elements\n", Rank, neighbours[EAST], east_west_size);
         }
-        if (neighbours[WEST] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][WEST], east_west_size, MPI_DOUBLE, 
-                                   neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
-                                   &reqs[req_idx++]), comm_time);
-        }
-
-        if (neighbours[WEST] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][WEST], east_west_size, MPI_DOUBLE, 
-                                   neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
-                                   &reqs[req_idx++]), comm_time);
-        }
-        if (neighbours[EAST] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][EAST], east_west_size, MPI_DOUBLE, 
-                                   neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
-                                   &reqs[req_idx++]), comm_time);
-        }
-
-        // NORTH-SOUTH Communication
-        if (neighbours[NORTH] != MPI_PROC_NULL) {
-            if (verbose > 0) {
-                printf("Rank %d: Sending NORTH to %d: %d elements\n", 
-                       Rank, neighbours[NORTH], north_south_size);
-            }
-            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][NORTH], north_south_size, MPI_DOUBLE, 
-                                   neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
-                                   &reqs[req_idx++]), comm_time);
-        }
-        if (neighbours[SOUTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][SOUTH], north_south_size, MPI_DOUBLE, 
-                                   neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
-                                   &reqs[req_idx++]), comm_time);
-        }
-
-        if (neighbours[SOUTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Isend(buffers[SEND][SOUTH], north_south_size, MPI_DOUBLE, 
-                                   neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
-                                   &reqs[req_idx++]), comm_time);
-        }
-        if (neighbours[NORTH] != MPI_PROC_NULL) {
-            MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][NORTH], north_south_size, MPI_DOUBLE, 
-                                   neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, 
-                                   &reqs[req_idx++]), comm_time);
-        }
-
-        MPI_Waitall(req_idx, reqs, MPI_STATUSES_IGNORE);
+        MPI_CALL_TIMER(MPI_Isend(buffers[SEND][EAST], east_west_size, MPI_DOUBLE, neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
     }
+    if (neighbours[WEST] != MPI_PROC_NULL) {
+        MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][WEST], east_west_size, MPI_DOUBLE, neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+    }
+    if (neighbours[WEST] != MPI_PROC_NULL) {
+        MPI_CALL_TIMER(MPI_Isend(buffers[SEND][WEST], east_west_size, MPI_DOUBLE, neighbours[WEST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+    }
+    if (neighbours[EAST] != MPI_PROC_NULL) {
+        MPI_CALL_TIMER(MPI_Irecv(buffers[RECV][EAST], east_west_size, MPI_DOUBLE, neighbours[EAST], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+    }
+
+    // NORD-SUD: usiamo direttamente i pointer sulle righe ghost/interne (no buffer)
+    // riga = plane->data + width * y
+    if (neighbours[NORTH] != MPI_PROC_NULL) {
+        // invia riga interna y=1, ricevi ghost y=0
+        double *send_N = &plane->data[width * 1];
+        double *recv_N = &plane->data[width * 0];
+        MPI_CALL_TIMER(MPI_Isend(send_N, width, MPI_DOUBLE, neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+        MPI_CALL_TIMER(MPI_Irecv(recv_N, width, MPI_DOUBLE, neighbours[NORTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+        if (verbose > 0) printf("Rank %d exchanging NORTH (pointer)\n", Rank);
+    }
+    if (neighbours[SOUTH] != MPI_PROC_NULL) {
+        // invia riga interna y=height-2, ricevi ghost y=height-1
+        double *send_S = &plane->data[width * (height - 2)];
+        double *recv_S = &plane->data[width * (height - 1)];
+        MPI_CALL_TIMER(MPI_Isend(send_S, width, MPI_DOUBLE, neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+        MPI_CALL_TIMER(MPI_Irecv(recv_S, width, MPI_DOUBLE, neighbours[SOUTH], TAG_BORDER_EXCHANGE, MPI_COMM_WORLD, &reqs[req_idx++]), comm_time);
+        if (verbose > 0) printf("Rank %d exchanging SOUTH (pointer)\n", Rank);
+    }
+
+    if (req_idx > 0)
+        MPI_Waitall(req_idx, reqs, MPI_STATUSES_IGNORE);
+}
